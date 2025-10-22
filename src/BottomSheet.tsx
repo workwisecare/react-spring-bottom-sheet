@@ -36,6 +36,7 @@ import type {
 } from './types'
 import { debugging } from './utils'
 import type { ReactEventHandlers } from 'react-use-gesture/dist/types'
+import { SpringConfig } from 'react-spring'
 
 const { tension, friction } = config.default
 
@@ -93,6 +94,7 @@ export const BottomSheet = React.forwardRef<
     onSpringEnd,
     reserveScrollBarGap = blocking,
     expandOnContentDrag = false,
+    springConfig,
     ...props
   },
   forwardRef
@@ -179,15 +181,14 @@ export const BottomSheet = React.forwardRef<
   }, [findSnap, getDefaultSnap, maxHeight, maxSnap, minSnap])
 
   // New utility for using events safely
-  const asyncSet = useCallback<typeof set>(
-    // @ts-expect-error
+  type DS = Parameters<typeof set>[0] & { config?: SpringConfig }
+  const asyncSet = useCallback<(ds: DS) => Promise<DS>>(
     ({ onRest, config: { velocity = 1, ...config } = {}, ...opts }) =>
       new Promise((resolve) =>
         set({
           ...opts,
           config: {
             velocity,
-            ...config,
             // @see https://springs.pomb.us
             mass: 1,
             // "stiffness"
@@ -197,6 +198,8 @@ export const BottomSheet = React.forwardRef<
               friction,
               friction + (friction - friction * velocity)
             ),
+            ...springConfig,
+            ...config,
           },
           onRest: (...args) => {
             resolve(...args)
@@ -204,7 +207,7 @@ export const BottomSheet = React.forwardRef<
           },
         })
       ),
-    [set]
+    [set, springConfig]
   )
   const [current, send] = useMachine(overlayMachine, {
     devTools: debugging,

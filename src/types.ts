@@ -1,3 +1,5 @@
+import { SpringConfig } from "react-spring"
+
 export type SnapPointProps = {
   /**
    * The height of the sticky header, if there's one
@@ -150,6 +152,11 @@ export type Props = {
    * @default expandOnContentDrag === false
    */
   expandOnContentDrag?: boolean,
+
+  /**
+   * Configuration to customize the spring animation when expanding or collapsing the bottom sheet
+   */
+   springConfig?: SpringConfig
 } & Omit<React.PropsWithoutRef<JSX.IntrinsicElements['div']>, 'children'>
 
 export interface RefHandles {
