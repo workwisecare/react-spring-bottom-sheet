@@ -39,13 +39,12 @@ import type { ReactEventHandlers } from 'react-use-gesture/dist/types'
 
 const { tension, friction } = config.default
 
-const BottomSheetContext =
-  React.createContext<{
-    bind: (config: {
-      filterTaps?: boolean
-      isContentDragging?: boolean
-    }) => ReactEventHandlers
-  }>(null)
+const BottomSheetContext = React.createContext<{
+  bind: (config: {
+    filterTaps?: boolean
+    isContentDragging?: boolean
+  }) => ReactEventHandlers
+}>(null)
 export const useBottomSheetDragProps = () => {
   const context = useContext(BottomSheetContext)
   if (!context) return null
@@ -475,13 +474,13 @@ export const BottomSheet = React.forwardRef<
   useEffect(() => {
     const elem = scrollRef.current
 
-    const preventScrolling = e => {
+    const preventScrolling = (e: TouchEvent) => {
       if (preventScrollingRef.current) {
         e.preventDefault()
       }
     }
 
-    const preventSafariOverscroll = e => {
+    const preventSafariOverscroll = (e: TouchEvent) => {
       if (elem.scrollTop < 0) {
         requestAnimationFrame(() => {
           elem.style.overflow = 'hidden'
@@ -588,7 +587,7 @@ export const BottomSheet = React.forwardRef<
         newY = maxSnapRef.current
       }
 
-      preventScrollingRef.current = newY < maxSnapRef.current;
+      preventScrollingRef.current = newY < maxSnapRef.current
     } else {
       preventScrollingRef.current = false
     }
@@ -692,7 +691,12 @@ export const BottomSheet = React.forwardRef<
               {header}
             </div>
           )}
-          <div key="scroll" data-rsbs-scroll ref={scrollRef} {...(expandOnContentDrag ? bind({ isContentDragging: true }) : {})}>
+          <div
+            key="scroll"
+            data-rsbs-scroll
+            ref={scrollRef}
+            {...(expandOnContentDrag ? bind({ isContentDragging: true }) : {})}
+          >
             <div data-rsbs-content ref={contentRef}>
               {children}
             </div>
