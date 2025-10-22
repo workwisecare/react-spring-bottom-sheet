@@ -5,6 +5,11 @@ import { BottomSheet as _BottomSheet } from './BottomSheet'
 import type { Props, RefHandles, SpringEvent } from './types'
 import { useLayoutEffect } from './hooks'
 
+export {
+  useBottomSheetDragProps,
+  BottomSheetDraggable,
+} from './BottomSheet'
+
 export type {
   RefHandles as BottomSheetRef,
   Props as BottomSheetProps,

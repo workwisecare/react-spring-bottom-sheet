@@ -8,6 +8,7 @@
 import { useMachine } from '@xstate/react'
 import React, {
   useCallback,
+  useContext,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -34,8 +35,32 @@ import type {
   SnapPointProps,
 } from './types'
 import { debugging } from './utils'
+import type { ReactEventHandlers } from 'react-use-gesture/dist/types'
 
 const { tension, friction } = config.default
+
+const BottomSheetContext =
+  React.createContext<{
+    bind: (config: {
+      filterTaps?: boolean
+      isContentDragging?: boolean
+    }) => ReactEventHandlers
+  }>(null)
+export const useBottomSheetDragProps = () => {
+  const context = useContext(BottomSheetContext)
+  if (!context) return null
+  return context.bind({ isContentDragging: true })
+}
+export const BottomSheetDraggable = ({
+  children,
+}: {
+  children: (arg: {
+    dragProps: ReturnType<typeof useBottomSheetDragProps>
+  }) => React.ReactNode
+}) => {
+  const dragProps = useBottomSheetDragProps()
+  return children({ dragProps })
+}
 
 // @TODO implement AbortController to deal with race conditions
 
@@ -615,69 +640,71 @@ export const BottomSheet = React.forwardRef<
   const interpolations = useSpringInterpolations({ spring })
 
   return (
-    <animated.div
-      {...props}
-      data-rsbs-root
-      data-rsbs-state={publicStates.find(current.matches)}
-      data-rsbs-is-blocking={blocking}
-      data-rsbs-is-dismissable={!!onDismiss}
-      data-rsbs-has-header={!!header}
-      data-rsbs-has-footer={!!footer}
-      className={className}
-      ref={containerRef}
-      style={{
-        // spread in the interpolations yeees
-        ...interpolations,
-        // but allow overriding them/disabling them
-        ...style,
-        // Not overridable as the "focus lock with opacity 0" trick rely on it
-        // @TODO the line below only fails on TS <4
-        // @ts-ignore
-        opacity: spring.ready,
-      }}
-    >
-      {sibling}
-      {blocking && (
-        <div
-          // This component needs to be placed outside bottom-sheet, as bottom-sheet uses transform and thus creates a new context
-          // that clips this element to the container, not allowing it to cover the full page.
-          key="backdrop"
-          data-rsbs-backdrop
-          {...bind({ closeOnTap: true })}
-        />
-      )}
-      <div
-        key="overlay"
-        aria-modal="true"
-        role="dialog"
-        data-rsbs-overlay
-        tabIndex={-1}
-        ref={overlayRef}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            // Always stop propagation, to avoid weirdness for bottom sheets inside other bottom sheets
-            event.stopPropagation()
-            if (onDismiss) onDismiss()
-          }
+    <BottomSheetContext.Provider value={{ bind }}>
+      <animated.div
+        {...props}
+        data-rsbs-root
+        data-rsbs-state={publicStates.find(current.matches)}
+        data-rsbs-is-blocking={blocking}
+        data-rsbs-is-dismissable={!!onDismiss}
+        data-rsbs-has-header={!!header}
+        data-rsbs-has-footer={!!footer}
+        className={className}
+        ref={containerRef}
+        style={{
+          // spread in the interpolations yeees
+          ...interpolations,
+          // but allow overriding them/disabling them
+          ...style,
+          // Not overridable as the "focus lock with opacity 0" trick rely on it
+          // @TODO the line below only fails on TS <4
+          // @ts-ignore
+          opacity: spring.ready,
         }}
       >
-        {header !== false && (
-          <div key="header" data-rsbs-header ref={headerRef} {...bind()}>
-            {header}
-          </div>
+        {sibling}
+        {blocking && (
+          <div
+            // This component needs to be placed outside bottom-sheet, as bottom-sheet uses transform and thus creates a new context
+            // that clips this element to the container, not allowing it to cover the full page.
+            key="backdrop"
+            data-rsbs-backdrop
+            {...bind({ closeOnTap: true })}
+          />
         )}
-        <div key="scroll" data-rsbs-scroll ref={scrollRef} {...(expandOnContentDrag ? bind({ isContentDragging: true }) : {})}>
-          <div data-rsbs-content ref={contentRef}>
-            {children}
+        <div
+          key="overlay"
+          aria-modal="true"
+          role="dialog"
+          data-rsbs-overlay
+          tabIndex={-1}
+          ref={overlayRef}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              // Always stop propagation, to avoid weirdness for bottom sheets inside other bottom sheets
+              event.stopPropagation()
+              if (onDismiss) onDismiss()
+            }
+          }}
+        >
+          {header !== false && (
+            <div key="header" data-rsbs-header ref={headerRef} {...bind()}>
+              {header}
+            </div>
+          )}
+          <div key="scroll" data-rsbs-scroll ref={scrollRef} {...(expandOnContentDrag ? bind({ isContentDragging: true }) : {})}>
+            <div data-rsbs-content ref={contentRef}>
+              {children}
+            </div>
           </div>
+          {footer && (
+            <div key="footer" ref={footerRef} data-rsbs-footer {...bind()}>
+              {footer}
+            </div>
+          )}
         </div>
-        {footer && (
-          <div key="footer" ref={footerRef} data-rsbs-footer {...bind()}>
-            {footer}
-          </div>
-        )}
-      </div>
-    </animated.div>
+      </animated.div>
+    </BottomSheetContext.Provider>
   )
 })
 
