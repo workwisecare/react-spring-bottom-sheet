@@ -95,6 +95,7 @@ export const BottomSheet = React.forwardRef<
     reserveScrollBarGap = blocking,
     expandOnContentDrag = false,
     springConfig,
+    snapToClosestNextPoint,
     ...props
   },
   forwardRef
@@ -150,7 +151,7 @@ export const BottomSheet = React.forwardRef<
     enabled: ready && blocking && initialFocusRef !== false,
   })
 
-  const { minSnap, maxSnap, maxHeight, findSnap } = useSnapPoints({
+  const { minSnap, maxSnap, maxHeight, findSnap, findNextSnap } = useSnapPoints({
     contentRef,
     controlledMaxHeight,
     footerEnabled: !!footer,
@@ -170,6 +171,7 @@ export const BottomSheet = React.forwardRef<
   const minSnapRef = useRef(minSnap)
   const maxSnapRef = useRef(maxSnap)
   const findSnapRef = useRef(findSnap)
+  const findNextSnapRef = useRef(findNextSnap)
   const defaultSnapRef = useRef(0)
   // Sync the refs with current state, giving the spring full control over when to respond to changes
   useLayoutEffect(() => {
@@ -177,8 +179,9 @@ export const BottomSheet = React.forwardRef<
     maxSnapRef.current = maxSnap
     minSnapRef.current = minSnap
     findSnapRef.current = findSnap
+    findNextSnapRef.current = findNextSnap
     defaultSnapRef.current = findSnap(getDefaultSnap)
-  }, [findSnap, getDefaultSnap, maxHeight, maxSnap, minSnap])
+  }, [findSnap, findNextSnap, getDefaultSnap, maxHeight, maxSnap, minSnap])
 
   // New utility for using events safely
   type DS = Parameters<typeof set>[0] & { config?: SpringConfig }
@@ -600,9 +603,10 @@ export const BottomSheet = React.forwardRef<
     }
 
     if (last) {
+      const closestNextPoint = findNextSnapRef.current(memo, rawY)
       send('SNAP', {
         payload: {
-          y: newY,
+          y: snapToClosestNextPoint ? closestNextPoint : newY,
           velocity: velocity > 0.05 ? velocity : 1,
           source: 'dragging',
         },

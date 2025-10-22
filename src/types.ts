@@ -157,6 +157,12 @@ export type Props = {
    * Configuration to customize the spring animation when expanding or collapsing the bottom sheet
    */
    springConfig?: SpringConfig
+
+   /**
+    * If true, the bottom sheet will snap to the closest next snap point when the user releases it.
+    * @default snapToClosestNextPoint === false
+    */
+   snapToClosestNextPoint?: boolean
 } & Omit<React.PropsWithoutRef<JSX.IntrinsicElements['div']>, 'children'>
 
 export interface RefHandles {

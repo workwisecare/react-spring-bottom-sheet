@@ -91,9 +91,21 @@ export function useSnapPoints({
     )
   }
 
+  function findNextSnap(currentY: number, targetY: number) {
+    if (targetY > currentY) {
+      const nextSnapUp = snapPoints.find(snap => snap >= targetY)
+      return (nextSnapUp ?? maxSnap)
+    } else if (targetY < currentY) {
+      const nextSnapDown = [...snapPoints].reverse().find(snap => snap <= targetY)
+      return (nextSnapDown ?? minSnap)
+    } else {
+      return findSnap(currentY)
+    }
+  }
+
   useDebugValue(`minSnap: ${minSnap}, maxSnap:${maxSnap}`)
 
-  return { minSnap, maxSnap, findSnap, maxHeight }
+  return { minSnap, maxSnap, findSnap, findNextSnap, maxHeight }
 }
 
 function useDimensions({
